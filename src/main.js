@@ -46,8 +46,7 @@ async function onSubmit(event) {
   try {
     const { hits = [], totalHits = 0 } = await getImagesByQuery(currentQuery, currentPage);
 
-    if (hits.length === 0) {
-      showNoticeMessage('Sorry, there are no images matching your search query. Please try again!');
+    if (isNoMoreItemsLeft(hits)) {
       return;
     }
 
@@ -77,28 +76,15 @@ async function onLoadMore() {
   try {
     const { hits = [], totalHits = 0 } = await getImagesByQuery(currentQuery, currentPage);
    
-    if (hits.length === 0) {
-      // досягли кінця
-      showNoticeMessage("We're sorry, but you've reached the end of search results.");
+    if (isNoMoreItemsLeft(hits)) {
       return;
     }
-
-    // Висота однієї картки перед додаванням
-    const firstCard = document.querySelector(".gallery-item");
-    const cardHeight = firstCard
-      ? firstCard.getBoundingClientRect().height
-      : 0;
 
     createGallery(hits);
     loadedCount += hits.length;
 
     // Плавний скрол на дві висоти картки
-    if (cardHeight) {
-      window.scrollBy({
-        top: cardHeight * 2,
-        behavior: 'smooth'
-      });
-    }
+    scrollWindow();
 
     if (loadedCount >= totalHits) {
       hideLoadMoreButton();
@@ -118,4 +104,21 @@ function memoizeQuery(query) {
 function resetPagination() {
   currentPage = 1;
   loadedCount = 0;
+}
+
+function scrollWindow() {
+  const cardHeight = document.querySelector(".gallery-item").getBoundingClientRect().height
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth'
+  });
+}
+
+function isNoMoreItemsLeft(hits) {
+  if (hits.length === 0) {
+    showNoticeMessage("We're sorry, but you've reached the end of search results.");
+    return true;
+  }
+
+  return false;
 }
