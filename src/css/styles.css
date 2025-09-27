@@ -1,6 +1,6 @@
 /* загальні стилі */
 body {
-  font-family: Arial, sans-serif;
+  font-family: "Montserrat", sans-serif;
   margin: 0;
   padding: 20px;
   background-color: #f7f7f7;
@@ -130,6 +130,7 @@ input:focus {
 .info-value {
   font-weight: 400;
   font-size: 12px;
+  line-height: 2;
   color: #2e2f42;
 }
 
