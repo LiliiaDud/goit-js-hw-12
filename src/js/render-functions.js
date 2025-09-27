@@ -76,9 +76,11 @@ export function showLoadMoreLoader() {
   loader.classList.remove("hidden");
 }
 
-export function hideLoadMoreLoader() {
+export function hideLoadMoreLoader(showButton = true) {
   loader.classList.add("hidden");
-  showLoadMoreButton();
+  if (showButton) {
+    showLoadMoreButton()
+  };
 }
 
 /* показує кнопку Load more. */

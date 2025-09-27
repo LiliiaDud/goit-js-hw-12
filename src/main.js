@@ -23,6 +23,7 @@ const messageDefaults = { position: "topRight", timeout: 2000 };
 let currentQuery = "";
 let currentPage = 1;
 let loadedCount = 0;
+let reachedEnd = false;
 
 form.addEventListener("submit", onSubmit);
 loadMoreBtn.addEventListener("click", onLoadMore);
@@ -46,7 +47,7 @@ async function onSubmit(event) {
   try {
     const { hits = [], totalHits = 0 } = await getImagesByQuery(currentQuery, currentPage);
 
-    if (isNoMoreItemsLeft(hits)) {
+    if (isEmptyResponse(hits)) {
       return;
     }
 
@@ -54,13 +55,13 @@ async function onSubmit(event) {
     loadedCount += hits.length;
 
     // Показуємо кнопку, якщо є ще що вантажити
-    if (loadedCount < totalHits) {
+    if (!isReachedEnd(totalHits)) {
       showSuccessMessage(`Found ${totalHits} images for "${currentQuery}". Showing ${hits.length}.`);
       showLoadMoreButton();
     } else {
       showNoticeMessage("We're sorry, but you've reached the end of search results.");
     }
-  } catch {
+  } catch(error) {
     showErrorMessage("Something went wrong. Please try again later.");
   } finally {
     hideSubmitLoader();
@@ -76,24 +77,22 @@ async function onLoadMore() {
   try {
     const { hits = [], totalHits = 0 } = await getImagesByQuery(currentQuery, currentPage);
    
-    if (isNoMoreItemsLeft(hits)) {
+    if (isEmptyResponse(hits)) {
       return;
     }
 
     createGallery(hits);
     loadedCount += hits.length;
 
-    // Плавний скрол на дві висоти картки
     scrollWindow();
 
-    if (loadedCount >= totalHits) {
-      hideLoadMoreButton();
+    if (isReachedEnd(totalHits)) {
       showNoticeMessage("We're sorry, but you've reached the end of search results.");
-    }
+    };
   } catch {
     showErrorMessage("Something went wrong. Please try again later.");
   } finally {
-    hideLoadMoreLoader();
+    hideLoadMoreLoader(!reachedEnd);
   }
 }
 
@@ -102,6 +101,7 @@ function memoizeQuery(query) {
 }
 
 function resetPagination() {
+  reachedEnd = false;
   currentPage = 1;
   loadedCount = 0;
 }
@@ -114,9 +114,21 @@ function scrollWindow() {
   });
 }
 
-function isNoMoreItemsLeft(hits) {
+function isEmptyResponse(hits) {
   if (hits.length === 0) {
+    reachedEnd = true;
     showNoticeMessage("We're sorry, but you've reached the end of search results.");
+
+    return true;
+  }
+
+  return false;
+}
+
+function isReachedEnd(totalHits) {
+  if (loadedCount >= totalHits) {
+    reachedEnd = true;
+
     return true;
   }
 
