@@ -175,12 +175,3 @@ input:focus {
 .hidden {
   display: none !important;
 }
-
-
-
-/* Текст під loader 
-.loader p {
-  margin: 0;
-  font-size: 14px;
-  color: #4e75ff;
-} */
