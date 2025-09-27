@@ -1,59 +1,121 @@
-import iziToast from 'izitoast';
-import 'izitoast/dist/css/iziToast.min.css';
-
-import { getImagesByQuery } from "./js/pixabay-api.js";
-import { createGallery, clearGallery, showLoader, hideLoader } from "./js/render-functions.js";
+import { getImagesByQuery } from './js/pixabay-api.js';
+import {
+  createGallery,
+  clearGallery,
+  showSubmitLoader,
+  hideSubmitLoader,
+  showLoadMoreLoader,
+  hideLoadMoreLoader,
+  showLoadMoreButton,
+  hideLoadMoreButton,
+  showWarningMessage,
+  showNoticeMessage,
+  showSuccessMessage,
+  showErrorMessage,
+} from './js/render-functions.js';
 
 const form = document.querySelector(".form");
-const messageDefaults = { position: 'topRight', timeout: 2000 };
+const loadMoreBtn = document.querySelector(".load-more");
 
-form.addEventListener("submit", handlerSubmit);
+const messageDefaults = { position: "topRight", timeout: 2000 };
 
-function handlerSubmit(event) {
+// глобальний стан пагінації
+let currentQuery = "";
+let currentPage = 1;
+let loadedCount = 0;
+
+form.addEventListener("submit", onSubmit);
+loadMoreBtn.addEventListener("click", onLoadMore);
+
+async function onSubmit(event) {
   event.preventDefault();
-    
-    const query = event.target.elements["search-text"].value.trim();
+
+  const query = event.target.elements["search-text"].value.trim();
   //Якщо рядок пустий
-    if (!query) {
-    iziToast.warning({
-      ...messageDefaults,
-      title: "Warning",
-      message: "Please enter a search query!",
-    });
+  if (!query) {
+    showWarningMessage("Please enter a search query!");
     return;
   }
-//очищаємо DOM і показуємо loader
-    clearGallery();
-    showLoader();
 
-    getImagesByQuery(query)
-    .then(data => {
-      const { hits } = data;
+  memoizeQuery(query);
+  resetPagination();
+  clearGallery();
+  hideLoadMoreButton();
+  showSubmitLoader();
 
-      if (hits.length === 0) {
-        iziToast.info({
-          ...messageDefaults,
-          message: 'Sorry, there are no images matching your search query. Please try again!',
-        });
-        return;
-      }
+  try {
+    const { hits = [], totalHits = 0 } = await getImagesByQuery(currentQuery, currentPage);
 
-      createGallery(hits);
+    if (hits.length === 0) {
+      showNoticeMessage('Sorry, there are no images matching your search query. Please try again!');
+      return;
+    }
 
-      iziToast.success({
-        ...messageDefaults,
-        message: `Found ${hits.length} images for "${query}".`,
+    createGallery(hits);
+    loadedCount += hits.length;
+
+    // Показуємо кнопку, якщо є ще що вантажити
+    if (loadedCount < totalHits) {
+      showSuccessMessage(`Found ${totalHits} images for "${currentQuery}". Showing ${hits.length}.`);
+      showLoadMoreButton();
+    } else {
+      showNoticeMessage("We're sorry, but you've reached the end of search results.");
+    }
+  } catch {
+    showErrorMessage("Something went wrong. Please try again later.");
+  } finally {
+    hideSubmitLoader();
+  }
+}
+
+// Обробник кнопки Load more
+async function onLoadMore() {
+  // Збільшуємо сторінку
+  currentPage += 1;
+  showLoadMoreLoader();
+
+  try {
+    const { hits = [], totalHits = 0 } = await getImagesByQuery(currentQuery, currentPage);
+   
+    if (hits.length === 0) {
+      // досягли кінця
+      showNoticeMessage("We're sorry, but you've reached the end of search results.");
+      return;
+    }
+
+    // Висота однієї картки перед додаванням
+    const firstCard = document.querySelector(".gallery-item");
+    const cardHeight = firstCard
+      ? firstCard.getBoundingClientRect().height
+      : 0;
+
+    createGallery(hits);
+    loadedCount += hits.length;
+
+    // Плавний скрол на дві висоти картки
+    if (cardHeight) {
+      window.scrollBy({
+        top: cardHeight * 2,
+        behavior: 'smooth'
       });
-    })
-    .catch(() => {
-      iziToast.error({
-        ...messageDefaults,
-        title: 'Error',
-        message: 'Something went wrong. Please try again later.',
-      });
-    })
-    .finally(() => {
-      hideLoader();
-      form.reset();
-    });
+    }
+
+    if (loadedCount >= totalHits) {
+      hideLoadMoreButton();
+      showNoticeMessage("We're sorry, but you've reached the end of search results.");
+    }
+  } catch {
+    showErrorMessage("Something went wrong. Please try again later.");
+  } finally {
+    hideLoadMoreLoader();
+  }
+}
+
+function memoizeQuery(query) {
+  currentQuery = query;
+}
+
+function resetPagination() {
+  currentPage = 1;
+  loadedCount = 0;
 }

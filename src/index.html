@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -11,15 +11,22 @@
     <main class="container">
       <form class="form">
         <label>
-          <input type="text" name="search-text" placeholder="Search images..." required>
+          <input
+            type="text"
+            name="search-text"
+            placeholder="Search images..."
+          />
         </label>
         <button type="submit">Search</button>
-        <span class="loader hidden"></span>
       </form>
 
-      
       <ul class="gallery"></ul>
-    </main>
+
+      <div class="controls">
+        <button class="load-more hidden" type="button">Load more</button>
+        <span class="loader js-load-more hidden"></span>
+      </div>
+
     <script type="module" src="./main.js"></script>
   </body>
 </html>
