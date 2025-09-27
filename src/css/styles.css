@@ -76,11 +76,11 @@ input:focus {
 /* галерея */
 .gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 16px;
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 60px;
 }
 
 .gallery-item {
