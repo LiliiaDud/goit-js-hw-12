@@ -20,7 +20,8 @@ export async function getImagesByQuery(query, page) {
     });
     return data;
   } catch (error) {
-    // відпр для обробки в main.js
+    console.error('Request to API failed', error)
+    
     throw error;
   }
 }
